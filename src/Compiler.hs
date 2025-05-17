@@ -3,20 +3,20 @@ module Compiler where
 import           Parser
 
 data Bytecode
-  = Push Double
-  | Add
-  | Subtract
-  | Multiply
-  | Divide
+  = PUSH Double
+  | ADD
+  | SUB
+  | MUL
+  | DIV
   deriving (Show, Eq)
 
 compiler :: Expr -> [Bytecode]
-compiler (Number x) = [Push x]
+compiler (Number x) = [PUSH x]
 compiler (BinOp op left right) =
   compiler left ++ compiler right ++ [opToBytecode op]
   where
     opToBytecode :: Operator -> Bytecode
-    opToBytecode OpPlus   = Add
-    opToBytecode OpMinus  = Subtract
-    opToBytecode OpTimes  = Multiply
-    opToBytecode OpDivide = Divide
+    opToBytecode OpPlus   = ADD
+    opToBytecode OpMinus  = SUB
+    opToBytecode OpTimes  = MUL
+    opToBytecode OpDivide = DIV
