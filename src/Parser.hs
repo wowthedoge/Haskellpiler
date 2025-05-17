@@ -5,6 +5,8 @@ import           Text.Read (readMaybe)
 
 data Expr
   = Number Double
+  | Var String
+  | Assign String Expr
   | BinOp Operator Expr Expr
   deriving (Show, Eq)
 
@@ -28,7 +30,7 @@ tokOperator TokMinus  = OpMinus
 tokOperator TokTimes  = OpTimes
 tokOperator TokDivide = OpDivide
 tokOperator _         = error "Invalid operator"
-    
+
 parser :: [Token] -> Expr
 parser tokens =
   let (expr, rest) = parseExpr 0 tokens
@@ -43,6 +45,10 @@ parseNumber (TokNumber n:tokens)
 parseNumber _ = error "Failed parsing number"
 
 parseExpr :: Int -> [Token] -> (Expr, [Token])
+parseExpr precedence (TokIdentifier name:rest) = (Var name, rest)
+parseExpr precedence (TokVar:TokIdentifier name:TokAssign:rest) =
+  let (rhs, rest') = parseExpr 0 rest
+   in (Assign name rhs, rest')
 parseExpr precedence tokens
   -- trace
   --   ("parseExpr called with precedence "

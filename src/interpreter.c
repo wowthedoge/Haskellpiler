@@ -6,27 +6,33 @@
 #define PROGRAM_SIZE 100
 #define STACK_SIZE 100
 
+// Parsing
 typedef enum
 {
     PUSH,
     ADD,
     SUB,
     MUL,
-    DIV
+    DIV,
+    LOAD,
+    STORE
 } Bytecode;
 
 typedef struct
 {
     Bytecode instruction;
-    double operand;
+    union {
+        double number;
+        char* name;
+    };
 } Instruction;
 
 Instruction parseInstruction(char *line)
 {
     Instruction instr;
-    if (sscanf(line, "PUSH %lf", &instr.operand))
+    if (sscanf(line, "PUSH %lf", &instr.number))
     {
-        printf("matched PUSH %lf\n", instr.operand);
+        printf("matched PUSH %lf\n", instr.number);
         instr.instruction = PUSH;
     }
     else if (strncmp(line, "ADD", 3) == 0)
@@ -49,6 +55,20 @@ Instruction parseInstruction(char *line)
         printf("matched DIV\n");
         instr.instruction = DIV;
     }
+    else if (strncmp(line, "LOAD", 4) == 0)
+    {
+        instr.instruction = LOAD;\
+        size_t t = strcspn(line + 6, "\"");
+        instr.name = strndup(line + 6, t);
+        printf("matched LOAD %s\n", instr.name);
+    }
+    else if (strncmp(line, "STORE", 5) == 0)
+    {
+        instr.instruction = STORE;
+        size_t t = strcspn(line + 7, "\"");
+        instr.name = strndup(line + 7, t);
+        printf("matched STORE %s\n", instr.name);
+    }
     else
     {
         fprintf(stderr, "Unknown instruction: %s\n", line);
@@ -57,6 +77,14 @@ Instruction parseInstruction(char *line)
     return instr;
 }
 
+// Variable store
+typedef struct {
+    char* names[PROGRAM_SIZE];
+    double values[PROGRAM_SIZE];
+    int count;
+} VarTable;
+
+// Stack
 typedef struct
 {
     double data[STACK_SIZE];
@@ -83,6 +111,7 @@ double execute(Instruction *program, int instructionCount)
     printf("\nExecuting program...\n");
     Stack stack;
     initStack(&stack);
+    VarTable vars;
 
     for (int i = 0; i < instructionCount; i++)
     {
@@ -91,8 +120,8 @@ double execute(Instruction *program, int instructionCount)
         {
         case PUSH:
         {
-            push(&stack, instr.operand);
-            printf("pushing %lf\n", instr.operand);
+            push(&stack, instr.number);
+            printf("pushing %lf\n", instr.number);
             break;
         }
 
@@ -135,6 +164,41 @@ double execute(Instruction *program, int instructionCount)
             }
             push(&stack, a / b);
             break;
+        }
+
+        case STORE:
+        {
+            if (vars.count >= PROGRAM_SIZE)
+            {
+                fprintf(stderr, "Error: Variable table full\n");
+                exit(EXIT_FAILURE);
+            }
+            double value = pop(&stack);
+            vars.names[vars.count] = instr.name;
+            vars.values[vars.count] = value;
+            vars.count++;
+            printf("storing %lf in %s\n", value, instr.name);
+            break;
+        }
+
+        case LOAD:
+        {
+            int found = 0;
+            for (int i = 0; i < vars.count; i++)
+            {
+                if (strcmp(vars.names[i], instr.name) == 0)
+                {
+                    push(&stack, vars.values[i]);
+                    printf("loading %s: %lf\n", instr.name, vars.values[i]);
+                    break;
+                }
+            }
+
+            if (!found)
+            {
+                fprintf(stderr, "Error: Variable %s not found\n", instr.name);
+                exit(EXIT_FAILURE);
+            }
         }
 
         default:
