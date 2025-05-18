@@ -8,6 +8,7 @@ data Expr
   | Var String
   | Assign String Expr
   | BinOp Operator Expr Expr
+  | Print String
   deriving (Show, Eq)
 
 data Operator
@@ -49,6 +50,7 @@ parseExpr precedence (TokIdentifier name:rest) = (Var name, rest)
 parseExpr precedence (TokVar:TokIdentifier name:TokAssign:rest) =
   let (rhs, rest') = parseExpr 0 rest
    in (Assign name rhs, rest')
+parseExpr precedence (TokPrint:TokIdentifier name:rest) = (Print name, rest)
 parseExpr precedence tokens
   -- trace
   --   ("parseExpr called with precedence "

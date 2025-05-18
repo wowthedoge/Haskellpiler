@@ -12,10 +12,11 @@ data Token
   | TokVar
   | TokIdentifier String
   | TokAssign
+  | TokPrint
   deriving (Show, Eq)
 
 keywords :: [(String, Token)]
-keywords = [("var", TokVar)]
+keywords = [("var", TokVar), ("print", TokPrint)]
 
 lexer :: String -> [Token]
 lexer [] = []

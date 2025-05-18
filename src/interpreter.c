@@ -15,7 +15,8 @@ typedef enum
     MUL,
     DIV,
     LOAD,
-    STORE
+    STORE,
+    PRINT
 } Bytecode;
 
 typedef struct
@@ -68,6 +69,11 @@ Instruction parseInstruction(char *line)
         size_t t = strcspn(line + 7, "\"");
         instr.name = strndup(line + 7, t);
         printf("matched STORE %s\n", instr.name);
+    }
+    else if (strncmp(line, "PRINT", 5) == 0)
+    {
+        printf("matched PRINT\n");
+        instr.instruction = PRINT;
     }
     else
     {
@@ -190,6 +196,7 @@ double execute(Instruction *program, int instructionCount)
                 {
                     push(&stack, vars.values[i]);
                     printf("loading %s: %lf\n", instr.name, vars.values[i]);
+                    found = 1;
                     break;
                 }
             }
@@ -199,6 +206,16 @@ double execute(Instruction *program, int instructionCount)
                 fprintf(stderr, "Error: Variable %s not found\n", instr.name);
                 exit(EXIT_FAILURE);
             }
+            break;
+        }
+
+        case PRINT:
+        {
+            double value = pop(&stack);
+            printf("-------PRINT------- \n");
+            printf("%f\n", value);
+            printf("------------------- \n");
+            break;
         }
 
         default:
@@ -209,7 +226,7 @@ double execute(Instruction *program, int instructionCount)
         }
     }
 
-    return pop(&stack);
+    return 0;
 }
 
 int main()
@@ -223,15 +240,14 @@ int main()
     char line[LINE_BUFFER_SIZE];
     while (fgets(line, sizeof(line), fptr))
     {
-        printf("\nline: %s", line);
+        printf("line: %s", line);
         Instruction instr = parseInstruction(line);
         program[instructionCount++] = instr;
     }
 
     fclose(fptr);
 
-    double result = execute(program, instructionCount);
-    printf("Result: %lf\n", result);
+    execute(program, instructionCount);
 
     free(program);
     return 0;
