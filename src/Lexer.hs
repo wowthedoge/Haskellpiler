@@ -9,14 +9,27 @@ data Token
   | TokMinus
   | TokTimes
   | TokDivide
+  | TokLParen
+  | TokRParen
   | TokVar
   | TokIdentifier String
   | TokAssign
   | TokPrint
+  | TokFunc
+  | TokComma
+  | TokLBrace
+  | TokRBrace
+  | TokReturn
+  | TokSemicolon
   deriving (Show, Eq)
 
 keywords :: [(String, Token)]
-keywords = [("var", TokVar), ("print", TokPrint)]
+keywords =
+  [ ("var", TokVar)
+  , ("print", TokPrint)
+  , ("func", TokFunc)
+  , ("return", TokReturn)
+  ]
 
 lexer :: String -> [Token]
 lexer [] = []
@@ -29,6 +42,12 @@ lexer (c:cs)
   | c == '*' = TokTimes : lexer cs
   | c == '/' = TokDivide : lexer cs
   | c == '=' = TokAssign : lexer cs
+  | c == '(' = TokLParen : lexer cs
+  | c == ')' = TokRParen : lexer cs
+  | c == ',' = TokComma : lexer cs
+  | c == '{' = TokLBrace : lexer cs
+  | c == '}' = TokRBrace : lexer cs
+  | c == ';' = TokSemicolon : lexer cs
   | otherwise = error ("Invalid character: " ++ [c])
 
 lexNumber :: String -> [Token]
@@ -42,5 +61,5 @@ lexIdentifier :: String -> [Token]
 lexIdentifier cs =
   let (idStr, rest) = span (\c -> isAlpha c || isDigit c) cs
    in case lookup idStr keywords of
-        Just keyword -> keyword : lexer rest 
-        Nothing -> TokIdentifier idStr : lexer rest
+        Just keyword -> keyword : lexer rest
+        Nothing      -> TokIdentifier idStr : lexer rest

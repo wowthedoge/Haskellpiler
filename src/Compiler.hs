@@ -11,9 +11,12 @@ data Bytecode
   | LOAD String
   | STORE String
   | PRINT
+  | FUNCDEF String Int 
   deriving (Show, Eq)
 
 compiler :: Expr -> [Bytecode]
+compiler (Sequence exprs) =
+  concatMap compiler exprs
 compiler (Number x) = [PUSH x]
 compiler (Var name) = [LOAD name]
 compiler (Assign name expr) =

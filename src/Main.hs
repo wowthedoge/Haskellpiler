@@ -13,19 +13,18 @@ main = do
   callCommand "gcc -o interpreter interpreter.c"
   writeFile "bytecode.txt" ""
   source <- readFile "source.dg"
-  mapM_ processLine (lines source)
-  callCommand "./interpreter"
-
-processLine :: String -> IO()
-processLine line = do 
-  putStrLn ("------" ++ line)
-  let tokens = lexer line
+  let tokens = concatMap lexer (lines source)
   print tokens
   let ast = parser tokens
-  print ast
+  -- print ast
   let bytecode = compiler ast
   print bytecode
-  appendFile "bytecode.txt" (unlines (map show bytecode))
+
+  writeFile "bytecode.txt" (unlines (map show bytecode))
+
+  callCommand "./interpreter"
+
+
 
 -- main :: IO ()
 -- main = 
@@ -36,11 +35,7 @@ processLine line = do
 --   putStr "> "
 --   input <- getLine
 --   let tokens = lexer input
---   print tokens
---   let ast = parser tokens
---   print ast
---   let bytecode = compiler ast
---   print bytecode
+
 
 --   writeFile "bytecode.txt" (unlines (map show bytecode))
   
